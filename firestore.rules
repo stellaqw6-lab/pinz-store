@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== Helper =====
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == 'password'
+        && request.auth.token.email == "pinzxoxyofficial@gmail.com";
+    }
+
+    function productData(id) {
+      return get(/databases/$(database)/documents/products/$(id)).data;
+    }
+
+    function validProduct(d) {
+      return d.keys().hasOnly(['name', 'desc', 'price', 'discount', 'sort', 'active'])
+        && d.keys().hasAll(['name', 'price', 'discount', 'active'])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 80
+        && (!('desc' in d) || (d.desc is string && d.desc.size() <= 200))
+        && d.price is int && d.price > 0 && d.price <= 100000000
+        && d.discount is int && d.discount >= 0 && d.discount <= 100
+        && (!('sort' in d) || d.sort is int)
+        && d.active is bool;
+    }
+
+    function validBanner(d) {
+      return d.keys().hasOnly(['type', 'src'])
+        && d.keys().hasAll(['type', 'src'])
+        && d.src is string && d.src.size() > 0 && d.src.size() <= 950000
+        && ((d.type == 'image' && d.src.matches('data:image/.*'))
+            || (d.type == 'video' && d.src.matches('https://[^ ]+')));
+    }
+
+    function validPayment(d) {
+      return d.keys().hasOnly(['storeName', 'waNumber', 'qris'])
+        && d.keys().hasAll(['storeName', 'waNumber'])
+        && d.storeName is string && d.storeName.size() > 0 && d.storeName.size() <= 40
+        && d.waNumber is string && d.waNumber.matches('[0-9]{10,15}')
+        && (!('qris' in d)
+            || (d.qris is string && d.qris.size() <= 950000 && d.qris.matches('data:image/.*')));
+    }
+
+    // ===== Produk =====
+    match /products/{id} {
+      // Publik hanya boleh membaca produk aktif. Owner boleh semua.
+      allow read: if resource.data.active == true || isOwner();
+      allow create, update: if isOwner() && validProduct(request.resource.data);
+      allow delete: if isOwner();
+    }
+
+    // ===== Pengaturan (banner & pembayaran) =====
+    match /settings/{id} {
+      allow read: if true;
+      allow create, update: if isOwner()
+        && ((id == 'banner' && validBanner(request.resource.data))
+            || (id == 'payment' && validPayment(request.resource.data)));
+      allow delete: if isOwner() && id in ['banner', 'payment'];
+    }
+
+    // ===== Pesanan =====
+    match /orders/{id} {
+      // Pembeli (tanpa login) hanya boleh MEMBUAT pesanan yang valid.
+      allow create: if request.resource.data.keys().hasOnly(['code', 'username', 'productId', 'productName', 'total', 'status', 'createdAt'])
+        && request.resource.data.keys().hasAll(['code', 'username', 'productId', 'productName', 'total', 'status', 'createdAt'])
+        && request.resource.data.code is string
+        && request.resource.data.code.matches('EPN-[A-Z0-9]{3,8}')
+        && request.resource.data.username is string
+        && request.resource.data.username.matches('[A-Za-z0-9_.-]{1,40}')
+        && request.resource.data.status == 'baru'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.productId is string
+        && exists(/databases/$(database)/documents/products/$(request.resource.data.productId))
+        && productData(request.resource.data.productId).active == true
+        && request.resource.data.productName == productData(request.resource.data.productId).name
+        && request.resource.data.total is int
+        && request.resource.data.total == math.floor(
+             productData(request.resource.data.productId).price
+             * (100 - productData(request.resource.data.productId).discount) / 100);
+
+      // Hanya owner yang boleh membaca, dan hanya boleh mengubah field status.
+      allow read, delete: if isOwner();
+      allow update: if isOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['baru', 'dibayar', 'selesai'];
+    }
+
+    // Selain yang di atas: otomatis ditolak.
+  }
+}
