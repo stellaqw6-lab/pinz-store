@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EpinStore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="modulepreload" href="firebase.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="loader"><h1>EpinStore</h1><div class="bar"><i></i></div></div>
+<header class="top"><a class="logo" href="./" id="store-name">EpinStore</a></header>
+<div class="banner" id="banner"><div class="banner-fallback"><h1 id="banner-title">EpinStore</h1><p>Panel hosting bulanan</p></div></div>
+<div class="strip"><div class="strip-in"><span>Panel hosting bulanan</span><span>Bayar via QRIS</span><span>Konfirmasi lewat WhatsApp</span><span>Panel hosting bulanan</span><span>Bayar via QRIS</span><span>Konfirmasi lewat WhatsApp</span><span>Panel hosting bulanan</span><span>Bayar via QRIS</span><span>Konfirmasi lewat WhatsApp</span><span>Panel hosting bulanan</span><span>Bayar via QRIS</span><span>Konfirmasi lewat WhatsApp</span></div></div>
+<main>
+  <section id="catalog">
+    <h2>Pilih paket</h2>
+    <p class="msg" id="list-msg" hidden></p>
+    <div class="grid" id="products"></div>
+  </section>
+
+  <section id="checkout" hidden>
+    <button class="btn" id="co-back" type="button">Kembali</button>
+    <div class="card pay-card">
+      <h2 id="co-name"></h2>
+      <p id="co-desc"></p>
+      <p class="old" id="co-price"></p>
+    </div>
+    <form class="card" id="co-form" novalidate>
+      <label for="co-user">Request username</label>
+      <input id="co-user" maxlength="40" autocomplete="off" placeholder="contoh: budi_panel">
+      <p class="msg err" id="co-msg" hidden></p>
+      <button class="btn y" id="co-submit">Buat pesanan</button>
+    </form>
+  </section>
+
+  <section id="pay" hidden>
+    <div class="card pay-card">
+      <p class="old">Kode order</p>
+      <p class="code" id="pay-code"></p>
+      <p id="pay-for"></p>
+      <div class="qris" id="qris"></div>
+      <p class="old">Total bayar</p>
+      <p class="total" id="pay-total"></p>
+      <p>Scan QRIS, bayar sesuai total, lalu tekan Konfirmasi ke WhatsApp dan kirim bukti transfer di chat.</p>
+      <p class="msg err" id="pay-msg" hidden></p>
+      <a class="btn y" id="pay-wa" target="_blank" rel="noopener" hidden>Konfirmasi ke WhatsApp</a>
+    </div>
+    <p><button class="btn" id="pay-new" type="button">Pesan lagi</button></p>
+  </section>
+</main>
+<script>addEventListener("load",function(){setTimeout(function(){var l=document.getElementById("loader");if(l)l.classList.add("done")},900)})</script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
